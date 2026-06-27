@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Berkshire 스킬 사용 매뉴얼</title>
+<meta name="description" content="가치투자 리서치 스킬 16개 + 보조 도구 2개의 호출법 · 리서치 여정 · 출력 가이드">
+
+<style>
+  :root {
+    --paper: #F5F4EE;
+    --card: #FCFBF7;
+    --ink: #19241E;
+    --ink-soft: #29362E;
+    --pine: #1B6149;
+    --pine-deep: #123F30;
+    --brass: #94722E;
+    --rule: #DEDBD0;
+    --rule-strong: #C9C6B8;
+    --muted: #5A6259;
+    --good: #1B6149;
+    --warn: #94722E;
+    --crit: #8A3A2C;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+    --maxw: 1060px;
+    --step--1: 0.82rem;
+    --step-0: 1rem;
+    --step-1: 1.22rem;
+    --step-2: 1.55rem;
+    --step-3: 2.1rem;
+    --step-4: 3.0rem;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 clamp(1.1rem, 4vw, 2.5rem); }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; color: var(--ink); text-wrap: balance; line-height: 1.15; }
+
+  a { color: var(--pine); }
+
+  code, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: var(--step--1);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--pine);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    border-bottom: 1px solid var(--rule-strong);
+    padding: clamp(2.4rem, 6vw, 4rem) 0 clamp(1.6rem, 4vw, 2.4rem);
+  }
+  .masthead__rule {
+    height: 3px;
+    background: var(--pine);
+    width: 56px;
+    margin-bottom: 1.5rem;
+  }
+  .masthead h1 {
+    font-size: clamp(2.1rem, 6vw, var(--step-4));
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .masthead h1 .accent { color: var(--pine); font-style: italic; }
+  .masthead .lede {
+    font-family: var(--serif);
+    font-size: clamp(1.05rem, 2.4vw, var(--step-1));
+    color: var(--ink-soft);
+    max-width: 58ch;
+    margin: 0.4rem 0 0;
+    line-height: 1.5;
+  }
+  .quote {
+    margin: 1.6rem 0 0;
+    padding-left: 1rem;
+    border-left: 2px solid var(--brass);
+    color: var(--muted);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: var(--step-0);
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding: clamp(2.2rem, 5vw, 3.4rem) 0; border-bottom: 1px solid var(--rule); }
+  .sec-head { margin-bottom: 1.6rem; }
+  .sec-head h2 { font-size: var(--step-3); margin: 0.35rem 0 0.4rem; }
+  .sec-head p { color: var(--muted); max-width: 64ch; margin: 0; }
+
+  /* ---------- Concept strip ---------- */
+  .lenses { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .lens { background: var(--card); padding: 1.1rem 1.15rem; }
+  .lens h3 { font-size: var(--step-1); margin: 0 0 0.15rem; }
+  .lens .who { font-size: var(--step--1); color: var(--brass); letter-spacing: 0.04em; font-family: var(--mono); display: block; margin-bottom: 0.5rem; }
+  .lens p { margin: 0; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.5; }
+
+  .pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-top: 1.4rem; }
+  .pillar { padding-top: 0.9rem; border-top: 2px solid var(--ink); }
+  .pillar h3 { font-size: var(--step-0); margin: 0 0 0.25rem; font-family: var(--sans); font-weight: 700; }
+  .pillar p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+  /* ---------- Quick start ---------- */
+  .start-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+  @media (min-width: 720px) { .start-grid { grid-template-columns: 1.1fr 1fr; } }
+  .codeblock {
+    background: var(--ink);
+    color: #E8EAE3;
+    border-radius: 8px;
+    padding: 1.1rem 1.2rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .codeblock .cm { color: #88A697; }
+  .codeblock .pr { color: #D9B66B; }
+  .note { font-size: 0.9rem; color: var(--muted); }
+  .note strong { color: var(--ink); }
+
+  /* ---------- Journey ---------- */
+  .journey { display: grid; gap: 0; counter-reset: stage; }
+  .stage {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.1rem 1.3rem;
+    padding: 1.3rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .stage:first-child { border-top: none; }
+  .stage__num {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: var(--pine);
+    font-weight: 600;
+    padding-top: 0.2rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stage__num::before { counter-increment: stage; content: counter(stage, decimal-leading-zero); }
+  .stage__body h3 { font-size: var(--step-1); margin: 0 0 0.3rem; }
+  .stage__body > p { margin: 0 0 0.7rem; color: var(--ink-soft); max-width: 60ch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    background: var(--card);
+    border: 1px solid var(--rule-strong);
+    color: var(--pine-deep);
+    padding: 0.22rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip--mut { color: var(--muted); }
+
+  /* ---------- Skill catalogue ---------- */
+  .cat { margin-top: 2.2rem; }
+  .cat:first-of-type { margin-top: 0; }
+  .cat__head { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; padding-bottom: 0.7rem; border-bottom: 2px solid var(--ink); margin-bottom: 1.3rem; }
+  .cat__head h3 { font-size: var(--step-2); margin: 0; }
+  .cat__head .count { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+  .cat__head .blurb { font-size: 0.88rem; color: var(--muted); margin: 0; flex-basis: 100%; }
+
+  .skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1.1rem; }
+
+  .skill {
+    background: var(--card);
+    border: 1px solid var(--rule-strong);
+    border-radius: 8px;
+    padding: 1.1rem 1.15rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.18s ease, transform 0.18s ease;
+  }
+  .skill:hover { border-color: var(--pine); transform: translateY(-2px); }
+
+  .skill__cmd { font-family: var(--mono); font-size: 0.92rem; color: var(--pine-deep); font-weight: 600; word-break: break-word; }
+  .skill__cmd .arg { color: var(--muted); font-weight: 400; }
+  .skill__tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.55rem 0 0.7rem; }
+  .tag { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.16rem 0.46rem; border-radius: 4px; font-weight: 600; }
+  .tag--parallel { background: rgba(27,97,73,0.12); color: var(--pine-deep); }
+  .tag--single { background: rgba(0,0,0,0.05); color: var(--muted); }
+  .tag--spec { background: rgba(148,114,46,0.14); color: var(--brass); }
+
+  .skill__what { margin: 0 0 0.85rem; font-size: 0.92rem; color: var(--ink-soft); line-height: 1.5; }
+
+  .skill__meta { margin: auto 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 0.7rem; font-size: 0.85rem; border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+  .skill__meta dt { color: var(--brass); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; padding-top: 0.12rem; }
+  .skill__meta dd { margin: 0; color: var(--ink-soft); }
+  .skill__meta dd code { font-size: 0.8rem; color: var(--pine-deep); background: rgba(27,97,73,0.07); padding: 0.05rem 0.3rem; border-radius: 3px; }
+
+  /* ---------- Rules / conventions ---------- */
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.3rem 1.8rem; }
+  .rule-item h3 { font-size: var(--step-0); font-family: var(--sans); font-weight: 700; margin: 0 0 0.35rem; display: flex; align-items: center; gap: 0.5rem; }
+  .rule-item h3::before { content: ""; width: 8px; height: 8px; background: var(--pine); border-radius: 50%; flex: none; }
+  .rule-item p { margin: 0; font-size: 0.9rem; color: var(--muted); line-height: 1.55; }
+  .rule-item code { font-size: 0.82rem; color: var(--pine-deep); }
+
+  .naming { width: 100%; border-collapse: collapse; margin-top: 1.3rem; font-size: 0.85rem; }
+  .naming th, .naming td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .naming th { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .naming td code { font-family: var(--mono); font-size: 0.8rem; color: var(--pine-deep); }
+  .naming tr:hover td { background: rgba(27,97,73,0.04); }
+  .table-scroll { overflow-x: auto; }
+
+  /* ---------- Footer ---------- */
+  footer { padding: 2.4rem 0 3rem; }
+  footer p { font-size: 0.84rem; color: var(--muted); margin: 0.3rem 0; max-width: 70ch; }
+  footer .sig { font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 0.95rem; }
+
+  :focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; border-radius: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead__rule"></div>
+    <p class="eyebrow">Claude Code 가치투자 리서치 · 사용 매뉴얼</p>
+    <h1>AI <span class="accent">Berkshire</span></h1>
+    <p class="lede">워런 버핏 · 찰리 멍거 · 돤융핑 · 리루 — 네 거장의 방법론을 명령어로 옮긴 투자 리서치 스킬 모음. 한 사람과 Claude가 하나의 리서치 팀이 된다.</p>
+    <p class="quote">"Price is what you pay, value is what you get." — Warren Buffett</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">먼저 알아둘 것</p>
+      <h2>네 개의 렌즈, 하나의 결론</h2>
+      <p>모든 스킬은 같은 네 시각으로 기업을 본다. 단순 분업이 아니라 <strong>서로 도전하도록</strong> 설계되어 있다 — 한 사람이 "좋은 사업"이라 하면 다른 사람은 "어떻게 망하는가"를 묻는다.</p>
+    </div>
+
+    <div class="lenses">
+      <div class="lens">
+        <h3>비즈니스 본질</h3>
+        <span class="who">돤융핑</span>
+        <p>이 사업은 본질적으로 무엇으로 돈을 버는가. 좋은 사업의 특성과 모델을 본다.</p>
+      </div>
+      <div class="lens">
+        <h3>경제적 해자</h3>
+        <span class="who">워런 버핏</span>
+        <p>경쟁자로부터 초과수익을 지키는 구조적 우위와 안전마진을 본다.</p>
+      </div>
+      <div class="lens">
+        <h3>역발상 리스크</h3>
+        <span class="who">찰리 멍거</span>
+        <p>거꾸로 생각한다. 무엇이 이 투자를 무너뜨리는가, 어떤 편향에 빠졌는가.</p>
+      </div>
+      <div class="lens">
+        <h3>장기 확실성</h3>
+        <span class="who">리루</span>
+        <p>10년 뒤에도 존재하는가. 문명·산업 트렌드와 경영진 리스크를 본다.</p>
+      </div>
+    </div>
+
+    <div class="pillars">
+      <div class="pillar">
+        <h3>멀티 에이전트 병렬</h3>
+        <p>팀형 스킬은 독립 에이전트 4~7개를 동시에 투입한다. 검색량·시각이 그만큼 배가된다.</p>
+      </div>
+      <div class="pillar">
+        <h3>데이터 엄밀성</h3>
+        <p>핵심 수치는 2개 독립 출처로 교차검증, 오차 &gt;1% 표시. 계산은 도구로, LLM 암산 금지.</p>
+      </div>
+      <div class="pillar">
+        <h3>강제 결론</h3>
+        <p>양시론 금지. 통과 / 회색지대 / 제외를 가격 구간과 함께 강제 출력한다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">시작하기</p>
+      <h2>설치하고 호출하기</h2>
+      <p>스킬 정의(<code>.md</code>)를 Claude Code의 commands 디렉터리에 복사하면, 슬래시 명령으로 바로 부른다. 명령어 이름 = 파일 이름.</p>
+    </div>
+    <div class="start-grid">
+      <div class="codeblock">
+<span class="cm"># 저장소 클론</span>
+git clone https://github.com/xbtlin/ai-berkshire.git
+
+<span class="cm"># 스킬을 전역 commands 디렉터리에 복사</span>
+cp ai-berkshire/skills/*.md ~/.claude/commands/</div>
+      <div class="codeblock">
+<span class="cm"># 한 기업을 본격 분석</span>
+/investment-team <span class="pr">텐센트</span>
+
+<span class="cm"># 10분 빠른 선별</span>
+/investment-checklist <span class="pr">마오타이, 핀둬둬</span>
+
+<span class="cm"># 실적 정독</span>
+/earnings-review <span class="pr">텐센트 2025Q4</span></div>
+    </div>
+    <p class="note" style="margin-top:1.1rem"><strong>인자 표기</strong> — 아래 카드의 <code class="mono">&lt;꺾쇠&gt;</code>는 필수 입력, <code class="mono">[대괄호]</code>는 선택 입력이다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">언제 무엇을 쓰는가</p>
+      <h2>리서치 여정</h2>
+      <p>스킬은 순서가 정해진 게 아니라 상황에 맞춰 고른다. 전형적인 흐름은 발굴에서 추적까지 다음 다섯 단계를 따른다.</p>
+    </div>
+
+    <div class="journey">
+      <div class="stage">
+        <div class="stage__num"></div>
+        <div class="stage__body">
+          <h3>발굴 · 선별</h3>
+          <p>후보를 추려 심층 연구할 가치가 있는지 빠르게 가린다. 한 종목이면 체크리스트, 여러 종목·지수·테마면 품질 선별, 산업 전체면 퍼널·전경 스캔.</p>
+          <div class="chips">
+            <span class="chip">/investment-checklist</span>
+            <span class="chip">/quality-screen</span>
+            <span class="chip">/industry-funnel</span>
+            <span class="chip">/industry-research</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage__num"></div>
+        <div class="stage__body">
+          <h3>심층 분석</h3>
+          <p>통과한 기업을 본격 해부한다. 가장 빠르고 포괄적인 첫 선택은 팀형. 경영진이 핵심이면 경영진 심층, 비상장이면 탐정식, 실적 시즌이면 재무제표 정독.</p>
+          <div class="chips">
+            <span class="chip">/investment-team</span>
+            <span class="chip">/investment-research</span>
+            <span class="chip">/management-deep-dive</span>
+            <span class="chip">/private-company-research</span>
+            <span class="chip">/earnings-review</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage__num"></div>
+        <div class="stage__body">
+          <h3>보유 · 추적</h3>
+          <p>매수 후의 규율 시스템. 투자 논문이 반증됐는지 분기마다 추적하고, 포트폴리오 전체의 집중도·상관관계를 점검하며, 주가가 튀면 10분 안에 원인을 가린다.</p>
+          <div class="chips">
+            <span class="chip">/thesis-tracker</span>
+            <span class="chip">/portfolio-review</span>
+            <span class="chip">/news-pulse</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage__num"></div>
+        <div class="stage__body">
+          <h3>공유 · 발행</h3>
+          <p>리서치를 공개 채널 수준의 글로. 한 기업을 8편 시리즈로 완전 해부하거나, 한 주제를 바로 발행 가능한 글로 다듬는다.</p>
+          <div class="chips">
+            <span class="chip">/deep-company-series</span>
+            <span class="chip">/wechat-article</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage__num"></div>
+        <div class="stage__body">
+          <h3>상시 도구</h3>
+          <p>여정 어디서든 부른다. 막힐 때 돤융핑식 사고로 묻고, 공급망 병목을 상시 추적하며, 모든 스킬은 공통 데이터 규범을 내장한다.</p>
+          <div class="chips">
+            <span class="chip">/dyp-ask</span>
+            <span class="chip">/bottleneck-hunter</span>
+            <span class="chip chip--mut">financial-data (내장 규범)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">스킬 레퍼런스</p>
+      <h2>16개 스킬 + 보조 도구 2개</h2>
+      <p>각 카드는 호출 형식 · 무엇을 하는가 · 언제 쓰는가 · 실행 흐름 · 출력 위치를 담는다. <span class="tag tag--parallel" style="vertical-align:middle">병렬</span> 표시는 에이전트를 동시에 투입하는 팀형 스킬이다.</p>
+    </div>
+
+    <!-- 심층 리서치 -->
+    <div class="cat">
+      <div class="cat__head">
+        <h3>심층 리서치</h3>
+        <span class="count">05</span>
+        <p class="blurb">한 기업을 끝까지 파고드는 본격 분석 스킬.</p>
+      </div>
+      <div class="skills">
+
+        <article class="skill">
+          <div class="skill__cmd">/investment-team <span class="arg">&lt;기업명&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--parallel">에이전트 4 병렬</span></div>
+          <p class="skill__what">4명의 독립 분석가(비즈니스·재무·경쟁·리스크)를 동시에 투입한다. 가장 빠르고 포괄적인 첫 선택지.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>한 기업을 본격 분석하는 기본 출발점</dd>
+            <dt>흐름</dt><dd>4역할 분배 → 병렬 리서치 → Team Lead 종합</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/</code> 4관점 + 최종보고서</dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/investment-research <span class="arg">&lt;기업명&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일 · 7단계</span></div>
+          <p class="skill__what">4대 거장 프레임워크를 한 컨텍스트에서 7단계로 순차 실행하는 종합 심층 리서치.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>깊고 일관된 단일 보고서가 필요할 때</dd>
+            <dt>흐름</dt><dd>데이터→본질→해자→역발상→경영진→트렌드→밸류에이션</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/{회사}-research-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/management-deep-dive <span class="arg">[인물] &lt;회사&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일</span></div>
+          <p class="skill__what">"주식을 사는 건 사람을 사는 것." 경영진의 능력·성실성·자본배분·지배구조를 검증한다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>경영진이 투자의 핵심 변수일 때</dd>
+            <dt>흐름</dt><dd>능력 → 성실성 추적 → 자본배분 → 부재 시나리오</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/{회사}-management-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/private-company-research <span class="arg">&lt;회사명&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--parallel">에이전트 6 병렬</span></div>
+          <p class="skill__what">정보가 희소한 비상장사를 탐정식으로. 재무를 다중 출처로 역추정하고 신호의 일관성을 검증한다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>앤트그룹·SpaceX 등 비상장 기업</dd>
+            <dt>흐름</dt><dd>6역할 병렬 → 교차검증 → 정보 사각지대 선언</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/{회사}-private-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/deep-company-series <span class="arg">&lt;기업명&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--spec">장문 · 8편</span></div>
+          <p class="skill__what">약 12만 자 8편 시리즈로 기업을 완전 해부 — 인식 리셋부터 매도 신호까지.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>공개 발행급 깊이의 시리즈가 필요할 때</dd>
+            <dt>흐름</dt><dd>5년 자료 조사 → 01~08편 순차 작성 → 일관성 스캔</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/《看懂..》/0X-*.md</code></dd>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- 재무제표 분석 -->
+    <div class="cat">
+      <div class="cat__head">
+        <h3>재무제표 분석</h3>
+        <span class="count">02</span>
+        <p class="blurb">2차 리포트가 아닌 1차 자료(재무제표·컨퍼런스콜)를 직접 정독.</p>
+      </div>
+      <div class="skills">
+
+        <article class="skill">
+          <div class="skill__cmd">/earnings-review <span class="arg">&lt;회사&gt; &lt;분기&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일</span></div>
+          <p class="skill__what">원본 재무제표만 읽고 워런 버핏처럼 분석한다. 주석에 숨은 정보와 경영진 어조까지 본다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>실적 발표 직후, 2차 리포트 의존 없이</dd>
+            <dt>흐름</dt><dd>원문 수집 → 핵심 추출·검증 → MD&amp;A 정독 → 주석 발굴</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/{회사}-earnings-{기간}.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/earnings-team <span class="arg">&lt;회사&gt; &lt;분기&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--parallel">에이전트 6 병렬</span></div>
+          <p class="skill__what">4대 거장이 병렬로 실적을 해석하고, 편집자·독자 검토를 거쳐 바로 발행 가능한 글로 다듬는다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>실적 해설을 공개 채널에 올릴 때</dd>
+            <dt>흐름</dt><dd>4대가 병렬 → 초안 → 편집·독자 검토 → 확정</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/</code> 5역할 + 발행본</dd>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- 산업 선별 -->
+    <div class="cat">
+      <div class="cat__head">
+        <h3>산업 선별</h3>
+        <span class="count">04</span>
+        <p class="blurb">산업·후보군에서 투자 가치 있는 종목을 좁혀 나가는 깔때기.</p>
+      </div>
+      <div class="skills">
+
+        <article class="skill">
+          <div class="skill__cmd">/industry-research <span class="arg">&lt;산업/트렌드&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일</span></div>
+          <p class="skill__what">공급망 전경도를 그리고 각 고리의 선도 기업을 4대 거장 방식으로 분석, 포트폴리오 배분까지 제안.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>한 산업의 모든 투자 기회를 훑을 때</dd>
+            <dt>흐름</dt><dd>논리 체인 → 가치사슬 전경 → 선도 기업 분석 → 배분</dd>
+            <dt>출력</dt><dd><code>reports/{산업}-industry-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/industry-funnel <span class="arg">&lt;산업/방향&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일 · 퍼널</span></div>
+          <p class="skill__what">전체 시장(30~60개) → 1차 선별(≤10) → 정밀 분석 → 최종 3개사. 탈락 사유까지 남긴다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>한 방향에서 소수 종목으로 정선할 때</dd>
+            <dt>흐름</dt><dd>전체 스캔 → 5지표 선별 → 정밀 → 상호보완 3선</dd>
+            <dt>출력</dt><dd><code>reports/{산업}-funnel-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/quality-screen <span class="arg">&lt;기업들|지수|테마&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일 · 하드지표</span></div>
+          <p class="skill__what">7개 하드 지표로 비일류 기업을 신속 제거하되, 3가지 면제 조건으로 우량주 오판을 막는다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>여러 종목·지수·테마를 빠르게 걸러낼 때</dd>
+            <dt>흐름</dt><dd>입력 파싱 → 7지표 검증 → 면제 확인 → 분류</dd>
+            <dt>출력</dt><dd>인라인 비교표 (파일 저장 없음)</dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/investment-checklist <span class="arg">&lt;기업들&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일 · 10분</span></div>
+          <p class="skill__what">워런 버핏 6단계 체크리스트로 심층 연구 가치를 10분 안에 판단. 마지막은 거울 테스트.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>본격 분석 전 빠른 1차 판단</dd>
+            <dt>흐름</dt><dd>능력범위→사업→해자→경영진→안전마진→규율</dd>
+            <dt>출력</dt><dd>통과/조건부/회색 비교표 + 거울 테스트</dd>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- 포지션 관리 -->
+    <div class="cat">
+      <div class="cat__head">
+        <h3>포지션 관리</h3>
+        <span class="count">03</span>
+        <p class="blurb">매수 후의 규율 — 추적하고, 점검하고, 이상 신호에 대응한다.</p>
+      </div>
+      <div class="skills">
+
+        <article class="skill">
+          <div class="skill__cmd">/portfolio-review <span class="arg">&lt;보유 비중 목록&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일</span></div>
+          <p class="skill__what">개별 포지션 건강도, 집중도, 상관관계, 기회비용을 종합 점검하고 리밸런싱을 제안한다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>"기업 리서치"에서 "포트폴리오 관리"로</dd>
+            <dt>흐름</dt><dd>보유 파싱 → 포지션 검진 → 조합 분석 → 최적화</dd>
+            <dt>출력</dt><dd><code>reports/portfolio-latest.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/thesis-tracker <span class="arg">&lt;회사&gt; [분기검사]</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일 · 장기</span></div>
+          <p class="skill__what">투자 논문을 작성하고 분기마다 핵심 가정·레드라인을 추적한다. 매도 규율 시스템.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>매수 후 논문 반증 여부를 지속 추적</dd>
+            <dt>흐름</dt><dd>논문 작성 → 가정 검증 → 레드라인 → 건강도 점수</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/{회사}-thesis.md</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/news-pulse <span class="arg">&lt;회사&gt; [변동/기간]</span></div>
+          <div class="skill__tags"><span class="tag tag--parallel">에이전트 4 병렬</span></div>
+          <p class="skill__what">주가 급등·급락 시 10~15분 안에 4차원(기업·규제·경쟁·심리)으로 원인을 가린다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>포지션이 튀어 "무슨 일이지?" 싶을 때</dd>
+            <dt>흐름</dt><dd>4차원 병렬 조사 → 성질 판단(가치/심리/불명)</dd>
+            <dt>출력</dt><dd><code>reports/{회사}/{회사}-news-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- 사고 도구 -->
+    <div class="cat">
+      <div class="cat__head">
+        <h3>사고 도구 · 규범</h3>
+        <span class="count">02</span>
+        <p class="blurb">분석을 떠받치는 사고 프레임과 데이터 규범.</p>
+      </div>
+      <div class="skills">
+
+        <article class="skill">
+          <div class="skill__cmd">/dyp-ask <span class="arg">&lt;질문&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--single">단일 · 사고</span></div>
+          <p class="skill__what">돤융핑(大道至简)의 사고 체계와 말투로 비즈니스·투자·인생 질문에 답한다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>판단이 막혔을 때, 본질로 돌아갈 때</dd>
+            <dt>흐름</dt><dd>8대 사상(능력범위·Stop doing·문화 등)으로 답</dd>
+            <dt>출력</dt><dd>직접 답변 (보고서 아님)</dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">financial-data <span class="arg">(내장 규범)</span></div>
+          <div class="skill__tags"><span class="tag tag--spec">규범 · 비호출</span></div>
+          <p class="skill__what">직접 부르는 명령이 아니라 모든 스킬에 내장된 데이터 규범. 출처 우선순위와 교차검증 기준.</p>
+          <dl class="skill__meta">
+            <dt>미국주</dt><dd>macrotrends + stockanalysis</dd>
+            <dt>홍콩주</dt><dd>aastocks + macrotrends(ADR)</dd>
+            <dt>A주</dt><dd>东方财富 + 巨潮资讯 · 오차 &gt;1% 표시</dd>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- 보조 도구 -->
+    <div class="cat">
+      <div class="cat__head">
+        <h3>보조 도구</h3>
+        <span class="count">+02</span>
+        <p class="blurb">README 공식 16개 외에 저장소에 함께 들어 있는 특수 스킬.</p>
+      </div>
+      <div class="skills">
+
+        <article class="skill">
+          <div class="skill__cmd">/bottleneck-hunter <span class="arg">&lt;슈퍼트렌드&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--spec">상시 스캔</span></div>
+          <p class="skill__what">3~5년 확실한 성장 트렌드의 물리적 공급망을 Layer 0~4로 분해해 "병목" 기업을 발굴한다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>확실한 트렌드의 진짜 수혜 지점을 찾을 때</dd>
+            <dt>흐름</dt><dd>트렌드 검증 → 공급망 분해 → 병목 등급(S/A/B)</dd>
+            <dt>출력</dt><dd><code>reports/bottleneck-map/</code></dd>
+          </dl>
+        </article>
+
+        <article class="skill">
+          <div class="skill__cmd">/wechat-article <span class="arg">&lt;주제&gt;</span></div>
+          <div class="skill__tags"><span class="tag tag--parallel">에이전트 다중</span></div>
+          <p class="skill__what">리서치 → 작가 초고 → 편집자·독자 검토를 거쳐 3000~4000자 발행 가능한 글을 만든다.</p>
+          <dl class="skill__meta">
+            <dt>언제</dt><dd>한 주제를 대중 채널 글로 발행할 때</dd>
+            <dt>흐름</dt><dd>3 리서치 병렬 → 작가 → 편집·독자 → 확정</dd>
+            <dt>출력</dt><dd><code>reports/.../公众号-{주제}-{날짜}.md</code></dd>
+          </dl>
+        </article>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">어디서나 지켜지는</p>
+      <h2>공통 규칙</h2>
+      <p>어떤 스킬을 부르든 모든 보고서에 동일하게 적용되는 원칙. 출력의 신뢰성은 여기서 나온다.</p>
+    </div>
+
+    <div class="rules">
+      <div class="rule-item">
+        <h3>객관성 우선</h3>
+        <p>사실과 의견을 엄격히 구분한다. 선입견 없이 데이터→논리→결론 순으로 전개하고, 모든 핵심 판단에 반대 논거를 함께 제시한다.</p>
+      </div>
+      <div class="rule-item">
+        <h3>2개 출처 교차검증</h3>
+        <p>핵심 데이터는 최소 2개 독립 출처로 대조하고 오차 &gt;1%는 표시한다. 추정값은 <code>[추정]</code>으로 명시한다.</p>
+      </div>
+      <div class="rule-item">
+        <h3>계산은 도구로</h3>
+        <p>PE·시가총액 등은 <code>tools/financial_rigor.py</code>로 정밀 계산(<code>Decimal</code>). LLM 암산 금지, 시총은 주가×주식수로 수작업 검증.</p>
+      </div>
+      <div class="rule-item">
+        <h3>통화 단위 명시</h3>
+        <p>홍콩달러·위안화·미달러를 항상 구분 표기해 단위 혼동을 막는다.</p>
+      </div>
+      <div class="rule-item">
+        <h3>정보 풍부도 등급</h3>
+        <p>보고서 첫머리에 A(충분)·B(적정)·C(희소) 등급을 매겨 "자료 많음 = 확실함" 착각을 방지한다.</p>
+      </div>
+      <div class="rule-item">
+        <h3>한국어 · 출처 명시</h3>
+        <p>모든 보고서는 한국어로, 직접적이고 간결하게. 데이터에는 출처를, 거장 어록은 요소요소에 인용한다.</p>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="naming">
+        <caption style="text-align:left;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:0 0 0.6rem;font-weight:600">보고서 저장 규칙 — 회사별 폴더, 산업·조합형은 루트</caption>
+        <thead>
+          <tr><th>스킬</th><th>파일 명명</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>investment-team</td><td><code>reports/{회사}/</code> 4관점 + 최종보고서</td></tr>
+          <tr><td>investment-research</td><td><code>{회사}-research-{YYYYMMDD}.md</code></td></tr>
+          <tr><td>investment-checklist</td><td><code>{회사}-checklist-{YYYYMMDD}.md</code></td></tr>
+          <tr><td>industry-research</td><td><code>{산업}-industry-{YYYYMMDD}.md</code> (루트)</td></tr>
+          <tr><td>industry-funnel</td><td><code>{산업}-funnel-{YYYYMMDD}.md</code> (루트)</td></tr>
+          <tr><td>private-company-research</td><td><code>{회사}/{회사}-private-{YYYYMMDD}.md</code></td></tr>
+          <tr><td>earnings-review / team</td><td><code>{회사}/{회사}-earnings-{기간}.md</code></td></tr>
+          <tr><td>thesis-tracker</td><td><code>{회사}/{회사}-thesis.md</code> (장기 유지)</td></tr>
+          <tr><td>portfolio-review</td><td><code>reports/portfolio-latest.md</code> (루트, 갱신)</td></tr>
+          <tr><td>management-deep-dive</td><td><code>{회사}/{회사}-management-{YYYYMMDD}.md</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="sig">AI Berkshire — 모든 사람에게 자신만의 투자 리서치 팀을.</p>
+    <p><strong>면책</strong> · 본 프레임워크와 산출물은 학습·연구 목적이며 어떠한 투자 조언도 구성하지 않는다. 투자에는 위험이 따르며 항상 스스로 충분한 실사(DYOR)를 수행하라.</p>
+    <p>저장소 <code>github.com/xbtlin/ai-berkshire</code> · 명명/디렉터리 규칙의 권위 출처는 <code>CLAUDE.md</code>, 데이터 규범은 <code>skills/financial-data.md</code>.</p>
+  </div>
+</footer>
+</body>
+</html>
