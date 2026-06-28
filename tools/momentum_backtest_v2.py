@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-动量发现 + 价值验证 回测工具 v2
-回测标的：NVDA / AMD / MU（AI芯片三巨头）
-核心问题：这个框架能否在AI浪潮早期捕捉到这些股票？
+모멘텀 발견 + 가치 검증 백테스트 도구 v2
+백테스트 대상: NVDA / AMD / MU (AI 반도체 빅3)
+핵심 질문: 이 프레임워크가 AI 물결 초기에 이 종목들을 포착할 수 있는가?
 
-NVDA：手工录入关键节点（Yahoo API被限制）
-AMD/MU：从JSON文件加载真实日线数据
+NVDA: 핵심 시점 수동 입력 (Yahoo API 제한됨)
+AMD/MU: JSON 파일에서 실제 일봉 데이터 로드
 """
 
 import json
@@ -15,7 +15,7 @@ from datetime import datetime
 from collections import OrderedDict
 
 # ============================================================
-# 基本面数据（手工录入，比API更准确）
+# 기본적 데이터 (수동 입력, API보다 더 정확)
 # ============================================================
 
 FUNDAMENTALS = {
@@ -65,7 +65,7 @@ FUNDAMENTALS = {
 
 
 # ============================================================
-# 从JSON文件加载价格数据
+# JSON 파일에서 가격 데이터 로드
 # ============================================================
 
 def load_prices_from_json(filepath):
@@ -86,7 +86,7 @@ def load_prices_from_json(filepath):
 
 
 # ============================================================
-# 动量发现引擎
+# 모멘텀 발견 엔진
 # ============================================================
 
 def scan_momentum(prices):
@@ -113,7 +113,7 @@ def scan_momentum(prices):
 
 
 # ============================================================
-# 价值验证引擎
+# 가치 검증 엔진
 # ============================================================
 
 def find_fund(ticker, date):
@@ -134,25 +134,25 @@ def verify(fund, prev_fund):
     pd = prev_fund[1] if prev_fund else None
 
     checks = {}
-    # 1.营收加速（同比增速改善）
+    # 1. 매출 가속 (전년 동기 대비 증가율 개선)
     if pd:
         checks["营收加速"] = d["rev_yoy"] > pd["rev_yoy"]
     else:
         checks["营收加速"] = d["rev_yoy"] > 20
 
-    # 2.毛利率方向
+    # 2. 매출총이익률 방향
     if pd:
         checks["毛利率↑"] = d["gm"] > pd["gm"] or d["gm"] > 50
     else:
         checks["毛利率↑"] = d["gm"] > 40
 
-    # 3.EPS超预期>10%
+    # 3. EPS 컨센서스 대비 10% 초과
     checks["盈利惊喜"] = d["eps_beat"] > 10
 
-    # 4.营收高增>15%
+    # 4. 매출 고성장 >15%
     checks["营收高增"] = d["rev_yoy"] > 15
 
-    # 5.毛利率>40%
+    # 5. 매출총이익률 >40%
     checks["毛利健康"] = d["gm"] > 40
 
     score = sum(1 for v in checks.values() if v)
@@ -160,7 +160,7 @@ def verify(fund, prev_fund):
 
 
 # ============================================================
-# 回测主逻辑
+# 백테스트 메인 로직
 # ============================================================
 
 def backtest(ticker, prices):
@@ -204,7 +204,7 @@ def backtest(ticker, prices):
         else:
             reject_signals.append(entry)
 
-    # 输出关键信号
+    # 핵심 신호 출력
     print(f"\n  --- 买入信号（价值验证≥3/5）---")
     first_buy = None
     for bs in buy_signals:
@@ -220,7 +220,7 @@ def backtest(ticker, prices):
         print(f"     营收同比{bs['rev_yoy']}% | 毛利{bs['gm']}% | EPS超预期{bs['eps_beat']}%")
         print(f"     验证 {bs['score']}/5：{checks_str}")
 
-    # 展示部分被拒绝的信号（帮助理解筛选效果）
+    # 거부된 신호 일부 표시 (필터링 효과 이해를 위해)
     early_rejects = [r for r in reject_signals if "2022-06" <= r["date"] <= "2023-06"]
     if early_rejects:
         print(f"\n  --- 被拒绝的信号（价值验证<3/5）---")
@@ -231,7 +231,7 @@ def backtest(ticker, prices):
             print(f"  ❌ {r['date']}  ${r['close']}  验证{r['score']}/5：{checks_str}")
             print(f"     基本面：{r['fund_label']} | 营收{r['rev_yoy']}% 毛利{r['gm']}%")
 
-    # 计算收益
+    # 수익 계산
     if first_buy:
         final = prices[-1]
         ret = (final["close"] - first_buy["close"]) / first_buy["close"] * 100
@@ -246,7 +246,7 @@ def backtest(ticker, prices):
 
 
 # ============================================================
-# NVDA手工分析（无法获取日线数据）
+# NVDA 수동 분석 (일봉 데이터 취득 불가)
 # ============================================================
 
 def nvda_manual_analysis():
@@ -255,7 +255,7 @@ def nvda_manual_analysis():
     print(f"  （Yahoo API受限，使用已知历史价格节点）")
     print(f"{'='*70}")
 
-    # NVDA关键价格节点（拆股调整后）
+    # NVDA 핵심 가격 시점 (액면분할 조정 후)
     key_prices = [
         ("2022-10-14", 11.2, "年内低点"),
         ("2023-01-06", 14.3, "ChatGPT催化后第一波"),
@@ -274,7 +274,7 @@ def nvda_manual_analysis():
     for date, price, note in key_prices:
         print(f"  {date}  ${price:>7.1f}  {note}")
 
-    # 分析动量信号
+    # 모멘텀 신호 분석
     print(f"\n  --- 动量信号分析 ---")
 
     print(f"\n  📅 2023-01-27  $19.9  ★第一个动量触发点")
@@ -319,7 +319,7 @@ def nvda_manual_analysis():
     print(f"     价值验证 {s4}/5：{checks_str4}")
     print(f"     判断：✅ 满分信号！5/5全通过")
 
-    # 收益计算
+    # 수익 시나리오 계산
     scenarios = [
         ("2023-01-27（边缘信号）", 19.9, 149.4, "2025-01"),
         ("2023-02-22（财报确认）", 23.4, 149.4, "2025-01"),
@@ -335,7 +335,7 @@ def nvda_manual_analysis():
 
 
 # ============================================================
-# 主程序
+# 메인 프로그램
 # ============================================================
 
 if __name__ == "__main__":
@@ -344,10 +344,10 @@ if __name__ == "__main__":
     print("  标的：NVDA / AMD / MU | 框架验证")
     print("=" * 70)
 
-    # NVDA：手工分析
+    # NVDA: 수동 분석
     nvda_manual_analysis()
 
-    # AMD：真实日线回测
+    # AMD: 실제 일봉 백테스트
     amd_file = "/tmp/AMD_prices.json"
     if os.path.exists(amd_file):
         amd_prices = load_prices_from_json(amd_file)
@@ -355,7 +355,7 @@ if __name__ == "__main__":
     else:
         print("\n  [WARN] AMD价格数据不可用")
 
-    # MU：真实日线回测
+    # MU: 실제 일봉 백테스트
     mu_file = "/tmp/MU_prices.json"
     if os.path.exists(mu_file):
         mu_prices = load_prices_from_json(mu_file)
@@ -363,7 +363,7 @@ if __name__ == "__main__":
     else:
         print("\n  [WARN] MU价格数据不可用")
 
-    # 总结
+    # 요약
     print(f"\n\n{'='*70}")
     print(f"  📋 回测总结：框架能否捕捉AI芯片三巨头？")
     print(f"{'='*70}")

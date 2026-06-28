@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""A股数据工具 — 腾讯行情 + 东方财富搜索/财务，零外部依赖（仅 stdlib）。
+"""A주 데이터 도구 — 텐센트 시세 + 동방재부 검색/재무, 외부 의존성 없음（stdlib만 사용）。
 
-为 Claude Code Skills 提供 A 股实时行情、财务数据等数据。
-设计原则：独立模块，不影响现有工具；使用 curl 直连绕过系统代理。
+Claude Code Skills에 A주 실시간 시세, 재무 데이터 등을 제공한다.
+설계 원칙：독립 모듈, 기존 도구에 영향 없음；curl 직접 연결로 시스템 프록시 우회.
 
-用法（由 Skills 自动调用）：
-    python3.11 tools/ashare_data.py quote 600519                    # 实时行情
-    python3.11 tools/ashare_data.py financials 600519               # 核心财务数据（近5年）
-    python3.11 tools/ashare_data.py valuation 600519                # 估值指标
-    python3.11 tools/ashare_data.py search 茅台                      # 搜索股票代码
+사용법（Skills에서 자동 호출）：
+    python3.11 tools/ashare_data.py quote 600519                    # 실시간 시세
+    python3.11 tools/ashare_data.py financials 600519               # 핵심 재무 데이터（최근 5년）
+    python3.11 tools/ashare_data.py valuation 600519                # 밸류에이션 지표
+    python3.11 tools/ashare_data.py search 茅台                      # 종목코드 검색
 
-需要 Python >= 3.8，零外部依赖。
+Python >= 3.8 필요, 외부 의존성 없음.
 """
 
 import argparse
@@ -24,7 +24,7 @@ _TIMEOUT = 15
 
 
 def _curl(url):
-    """用 curl --noproxy 直连，绕过系统代理。"""
+    """curl --noproxy 직접 연결로 시스템 프록시를 우회한다."""
     result = subprocess.run(
         ["/usr/bin/curl", "-s", "--noproxy", "*",
          "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
@@ -33,7 +33,7 @@ def _curl(url):
     )
     if result.returncode != 0 or not result.stdout.strip():
         raise ConnectionError(f"请求失败: {url}")
-    # 腾讯行情 API 返回 GBK 编码，其他返回 UTF-8
+    # 텐센트 시세 API는 GBK 인코딩 반환, 나머지는 UTF-8
     try:
         return result.stdout.decode("utf-8")
     except UnicodeDecodeError:
@@ -41,7 +41,7 @@ def _curl(url):
 
 
 def _curl_json(url, params=None):
-    """curl 获取 JSON。"""
+    """curl로 JSON을 가져온다."""
     if params:
         from urllib.parse import urlencode
         url = f"{url}?{urlencode(params)}"
@@ -49,11 +49,11 @@ def _curl_json(url, params=None):
 
 
 # ---------------------------------------------------------------------------
-# 腾讯行情 API（稳定可靠，无需鉴权）
+# 텐센트 시세 API（안정적이고 신뢰할 수 있음, 인증 불필요）
 # ---------------------------------------------------------------------------
 
 def _qq_code(code: str) -> str:
-    """将股票代码转为腾讯行情格式。"""
+    """종목코드를 텐센트 시세 형식으로 변환한다."""
     code = code.strip().replace(".SH", "").replace(".SZ", "").replace(".BJ", "")
     if code.startswith(("6", "9", "5")):
         return f"sh{code}"
@@ -65,7 +65,7 @@ def _qq_code(code: str) -> str:
 
 
 def _parse_qq_quote(raw: str) -> dict:
-    """解析腾讯行情数据。格式：v_shXXXXXX="字段1~字段2~..."; """
+    """텐센트 시세 데이터를 파싱한다. 형식：v_shXXXXXX="字段1~字段2~..."; """
     start = raw.find('"')
     end = raw.rfind('"')
     if start < 0 or end <= start:
@@ -79,7 +79,7 @@ def _parse_qq_quote(raw: str) -> dict:
         "price": fields[3],
         "prev_close": fields[4],
         "open": fields[5],
-        "volume": fields[6],         # 手
+        "volume": fields[6],         # 단위: 수（手）
         "buy_vol": fields[7],
         "sell_vol": fields[8],
         "high": fields[33] if len(fields) > 33 else fields[3],
@@ -89,12 +89,12 @@ def _parse_qq_quote(raw: str) -> dict:
         "turnover_amt": fields[37] if len(fields) > 37 else "-",
         "turnover_rate": fields[38] if len(fields) > 38 else "-",
         "pe": fields[39] if len(fields) > 39 else "-",
-        "market_cap": fields[45] if len(fields) > 45 else "-",    # 总市值（亿）
-        "float_cap": fields[44] if len(fields) > 44 else "-",     # 流通市值（亿）
+        "market_cap": fields[45] if len(fields) > 45 else "-",    # 시가총액（억）
+        "float_cap": fields[44] if len(fields) > 44 else "-",     # 유통 시가총액（억）
         "pb": fields[46] if len(fields) > 46 else "-",
         "high_52w": fields[47] if len(fields) > 47 else "-",
         "low_52w": fields[48] if len(fields) > 48 else "-",
-        "total_shares": fields[38] if len(fields) > 38 else "-",  # will recalculate
+        "total_shares": fields[38] if len(fields) > 38 else "-",  # 재계산 예정
     }
 
 
@@ -122,11 +122,11 @@ def _fmt_pct(value) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 命令实现
+# 명령 구현
 # ---------------------------------------------------------------------------
 
 def cmd_quote(code: str):
-    """实时行情快照。"""
+    """실시간 시세 스냅샷."""
     qq_code = _qq_code(code)
     raw = _curl(f"https://qt.gtimg.cn/q={qq_code}")
     d = _parse_qq_quote(raw)
@@ -156,7 +156,7 @@ def cmd_quote(code: str):
 
 
 def cmd_valuation(code: str):
-    """估值指标汇总。"""
+    """밸류에이션 지표 요약."""
     qq_code = _qq_code(code)
     raw = _curl(f"https://qt.gtimg.cn/q={qq_code}")
     d = _parse_qq_quote(raw)
@@ -178,7 +178,7 @@ def cmd_valuation(code: str):
     print(f"  52周最高:   {d['high_52w']}")
     print(f"  52周最低:   {d['low_52w']}")
 
-    # 市值验算
+    # 시가총액 검증
     try:
         p = Decimal(price)
         cap = Decimal(market_cap_yi) * Decimal("1e8")
@@ -193,7 +193,7 @@ def cmd_valuation(code: str):
 
 
 def cmd_financials(code: str):
-    """近5年核心财务数据。"""
+    """최근 5년 핵심 재무 데이터."""
     qq_code = _qq_code(code)
     raw = _curl(f"https://qt.gtimg.cn/q={qq_code}")
     d = _parse_qq_quote(raw)
@@ -202,7 +202,7 @@ def cmd_financials(code: str):
     code_clean = code.strip().replace(".SH", "").replace(".SZ", "").replace(".BJ", "")
     market = "SH" if code_clean.startswith(("6", "9", "5")) else "SZ"
 
-    # 东方财富 datacenter API（年报数据）
+    # 동방재부 datacenter API（연간 보고서 데이터）
     fin_url = "https://datacenter.eastmoney.com/securities/api/data/get"
     params = {
         "type": "RPT_F10_FINANCE_MAINFINADATA",
@@ -222,7 +222,7 @@ def cmd_financials(code: str):
     except Exception:
         pass
 
-    # 如果年报筛选无结果，去掉年报限制
+    # 연간 보고서 필터 결과가 없으면 연간 보고서 제한 제거
     if not reports:
         params["filter"] = f'(SECUCODE="{code_clean}.{market}")'
         try:
@@ -268,7 +268,7 @@ def cmd_financials(code: str):
 
 
 def cmd_search(keyword: str):
-    """搜索股票代码。"""
+    """종목코드를 검색한다."""
     url = "https://searchadapter.eastmoney.com/api/suggest/get"
     params = {
         "input": keyword,
@@ -295,7 +295,7 @@ def cmd_search(keyword: str):
 
 
 # ---------------------------------------------------------------------------
-# CLI 入口
+# CLI 진입점
 # ---------------------------------------------------------------------------
 
 def main():

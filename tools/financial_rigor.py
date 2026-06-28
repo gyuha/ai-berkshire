@@ -38,7 +38,7 @@ def exact(value) -> Decimal:
 
 
 def fmt_number(d: Decimal, unit: str = "") -> str:
-    """Format large numbers in human-readable form (亿/万亿/B/T)."""
+    """Format large numbers in human-readable form (亿/万亿/B/T). 큰 숫자를 읽기 쉬운 형태로 포맷한다."""
     v = float(d)
     abs_v = abs(v)
     if unit in ("亿", "亿元", "亿港元", "亿美元"):
@@ -55,7 +55,7 @@ def fmt_number(d: Decimal, unit: str = "") -> str:
 
 
 # ---------------------------------------------------------------------------
-# 1. Market Cap Verification (股价×总股本 vs 报告市值)
+# 1. 시가총액 검증 (주가×총발행주식수 vs 보고된 시가총액)
 # ---------------------------------------------------------------------------
 
 def verify_market_cap(price, shares, reported_cap, currency=""):
@@ -92,7 +92,7 @@ def verify_market_cap(price, shares, reported_cap, currency=""):
 
 
 # ---------------------------------------------------------------------------
-# 2. Valuation Metrics Verification (估值指标验算)
+# 2. 밸류에이션 지표 검증
 # ---------------------------------------------------------------------------
 
 def verify_valuation(price, eps=None, bvps=None, fcf_per_share=None,
@@ -161,7 +161,7 @@ def verify_valuation(price, eps=None, bvps=None, fcf_per_share=None,
 
 
 # ---------------------------------------------------------------------------
-# 3. Cross-Source Data Validation (多源交叉验证)
+# 3. 다중 출처 교차 검증
 # ---------------------------------------------------------------------------
 
 def cross_validate(field_name, source_values: dict, unit="", tolerance_pct=2.0):
@@ -205,7 +205,7 @@ def cross_validate(field_name, source_values: dict, unit="", tolerance_pct=2.0):
 
 
 # ---------------------------------------------------------------------------
-# 4. Benford's Law Quick Check (财务数据造假检测)
+# 4. 벤포드 법칙 간이 검사 (재무 데이터 조작 탐지)
 # ---------------------------------------------------------------------------
 
 _BENFORD = {d: math.log10(1 + 1/d) for d in range(1, 10)}
@@ -282,26 +282,26 @@ def benford_check(values: list):
 
 
 # ---------------------------------------------------------------------------
-# 5. Exact Calculator (精确计算器)
+# 5. 정밀 계산기
 # ---------------------------------------------------------------------------
 
 def exact_calc(expr: str):
-    """Evaluate a financial expression with exact decimal arithmetic.
+    """정밀 십진수 연산으로 재무 표현식을 계산한다.
 
-    Supports: +, -, *, /, (), numbers (including scientific notation).
+    지원 연산: +, -, *, /, (), 숫자(지수 표기법 포함).
     """
     print("=" * 60)
     print("精确计算 (Exact Calculator)")
     print("=" * 60)
 
-    # Safe evaluation: only allow numbers and arithmetic
+    # 안전한 평가: 숫자와 산술 연산자만 허용
     allowed = set("0123456789.+-*/() eE")
     if not all(c in allowed for c in expr.replace(" ", "")):
         print(f"  ❌ 不安全的表达式: {expr}")
         return None
 
     try:
-        # Replace scientific notation for Decimal compatibility
+        # Decimal 호환성을 위해 지수 표기법 처리
         result = eval(expr, {"__builtins__": {}}, {})
         d_result = exact(result)
         print(f"  表达式: {expr}")
@@ -314,14 +314,14 @@ def exact_calc(expr: str):
 
 
 # ---------------------------------------------------------------------------
-# 6. Three-Scenario Valuation (三情景估值)
+# 6. 3시나리오 밸류에이션
 # ---------------------------------------------------------------------------
 
 def three_scenario_valuation(current_price, current_eps, shares_billion,
                              growth_optimistic, growth_neutral, growth_pessimistic,
                              pe_optimistic, pe_neutral, pe_pessimistic,
                              years=3, currency=""):
-    """Calculate three-scenario target prices with exact arithmetic."""
+    """정밀 연산으로 3시나리오 목표 주가를 계산한다."""
     print("=" * 60)
     print("三情景估值模型 (Three-Scenario Valuation)")
     print("=" * 60)
@@ -346,7 +346,7 @@ def three_scenario_valuation(current_price, current_eps, shares_billion,
     for name, growth, pe in scenarios:
         g = exact(growth)
         target_pe = exact(pe)
-        # Future EPS = current EPS × (1 + growth)^years
+        # 미래 EPS = 현재 EPS × (1 + 성장률)^연수
         future_eps = eps
         for _ in range(years):
             future_eps = _CTX.multiply(future_eps, _CTX.add(Decimal("1"), g))
@@ -361,12 +361,12 @@ def three_scenario_valuation(current_price, current_eps, shares_billion,
 
 
 # ---------------------------------------------------------------------------
-# CLI Entry Point
+# CLI 진입점
 # ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Financial Rigor Toolkit — 金融数据严谨性验证工具",
+        description="Financial Rigor Toolkit — 재무 데이터 엄밀성 검증 도구",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -380,45 +380,45 @@ Examples:
     sub = parser.add_subparsers(dest="command")
 
     # verify-market-cap
-    mc = sub.add_parser("verify-market-cap", help="验算市值 = 股价 × 总股本")
+    mc = sub.add_parser("verify-market-cap", help="시가총액 검산 = 주가 × 총발행주식수")
     mc.add_argument("--price", type=float, required=True)
-    mc.add_argument("--shares", type=float, required=True, help="总股本")
-    mc.add_argument("--reported", type=float, required=True, help="报告市值")
-    mc.add_argument("--currency", default="", help="币种")
+    mc.add_argument("--shares", type=float, required=True, help="총발행주식수")
+    mc.add_argument("--reported", type=float, required=True, help="보고된 시가총액")
+    mc.add_argument("--currency", default="", help="통화 단위")
 
     # verify-valuation
-    val = sub.add_parser("verify-valuation", help="验算估值指标")
+    val = sub.add_parser("verify-valuation", help="밸류에이션 지표 검산")
     val.add_argument("--price", type=float, required=True)
     val.add_argument("--eps", type=float, default=None)
-    val.add_argument("--bvps", type=float, default=None, help="每股净资产")
+    val.add_argument("--bvps", type=float, default=None, help="주당 순자산")
     val.add_argument("--fcf-per-share", type=float, default=None)
-    val.add_argument("--dividend", type=float, default=None, help="每股股息")
+    val.add_argument("--dividend", type=float, default=None, help="주당 배당금")
     val.add_argument("--revenue-per-share", type=float, default=None)
 
     # cross-validate
-    cv = sub.add_parser("cross-validate", help="多源交叉验证")
-    cv.add_argument("--field", required=True, help="数据字段名")
-    cv.add_argument("--values", required=True, help="JSON: {来源: 数值}")
+    cv = sub.add_parser("cross-validate", help="다중 출처 교차 검증")
+    cv.add_argument("--field", required=True, help="데이터 필드명")
+    cv.add_argument("--values", required=True, help="JSON: {출처: 수치}")
     cv.add_argument("--unit", default="")
-    cv.add_argument("--tolerance", type=float, default=2.0, help="容差百分比")
+    cv.add_argument("--tolerance", type=float, default=2.0, help="허용 오차 퍼센트")
 
     # benford
-    bf = sub.add_parser("benford", help="Benford定律检测")
-    bf.add_argument("--values", required=True, help="JSON数组")
+    bf = sub.add_parser("benford", help="벤포드 법칙 검사")
+    bf.add_argument("--values", required=True, help="JSON 배열")
 
     # calc
-    ca = sub.add_parser("calc", help="精确计算")
-    ca.add_argument("--expr", required=True, help="算术表达式")
+    ca = sub.add_parser("calc", help="정밀 계산")
+    ca.add_argument("--expr", required=True, help="산술 표현식")
 
     # three-scenario
-    ts = sub.add_parser("three-scenario", help="三情景估值")
+    ts = sub.add_parser("three-scenario", help="3시나리오 밸류에이션")
     ts.add_argument("--price", type=float, required=True)
     ts.add_argument("--eps", type=float, required=True)
-    ts.add_argument("--shares", type=float, required=True, help="总股本(亿)")
+    ts.add_argument("--shares", type=float, required=True, help="총발행주식수(亿)")
     ts.add_argument("--growth", nargs=3, type=float, required=True,
-                    help="三情景年增速 (乐观 中性 悲观), 如 0.15 0.08 0.0")
+                    help="3시나리오 연간 성장률 (낙관 중립 비관), 예: 0.15 0.08 0.0")
     ts.add_argument("--pe", nargs=3, type=float, required=True,
-                    help="三情景目标PE, 如 25 20 15")
+                    help="3시나리오 목표 PE, 예: 25 20 15")
     ts.add_argument("--years", type=int, default=3)
     ts.add_argument("--currency", default="")
 

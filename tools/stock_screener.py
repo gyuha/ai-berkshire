@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-stock_screener.py — 动量发现 + 价值验证 选股筛
-用法：
-  python3 stock_screener.py                   # 扫描全部 watchlist
-  python3 stock_screener.py NVDA TSLA GOOG    # 扫描指定标的
-  python3 stock_screener.py --update MU       # 更新 MU 的基本面数据
+stock_screener.py — 모멘텀 발굴 + 가치 검증 종목 스크리너
+사용법：
+  python3 stock_screener.py                   # 전체 watchlist 스캔
+  python3 stock_screener.py NVDA TSLA GOOG    # 지정 종목 스캔
+  python3 stock_screener.py --update MU       # MU의 펀더멘털 데이터 업데이트
 
-框架：
-  第一层（动量发现）：60日新高 + 放量确认 → 进入待选池
-  第二层（价值验证）：6维评分 ≥ 3/6 → 买入信号
-  信号分级：3/6=试探仓3% | 4/6=标准仓5% | 5-6/6=确信仓8%
+프레임워크：
+  제1층（모멘텀 발굴）：60일 신고가 + 거래량 확인 → 후보 풀 진입
+  제2층（가치 검증）：6개 항목 점수 ≥ 3/6 → 매수 신호
+  신호 등급：3/6=탐색 포지션 3% | 4/6=표준 포지션 5% | 5-6/6=확신 포지션 8%
 
-改进点（来自NVDA/AMD/MU回测）：
-  1. 毛利率连续2季改善 → 独立买入条件（解决NVDA 2023-01漏判）
-  2. EPS超预期>30% → 周期股独立条件（解决MU底部信号）
-  3. 信号分级替代二元判断
+개선 사항（NVDA/AMD/MU 백테스트 기반）：
+  1. 총이익률 2분기 연속 개선 → 독립 매수 조건（NVDA 2023-01 누락 해결）
+  2. EPS 예상 대비 초과 >30% → 경기순환주 독립 조건（MU 바닥 신호 해결）
+  3. 신호 등급제로 이진 판단 대체
 """
 
 import json
@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 
 # ============================================================
-# 配置
+# 설정
 # ============================================================
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
@@ -38,15 +38,15 @@ DEFAULT_WATCHLIST = {
     "us_ai_infra": ["ETN", "PWR", "VRT", "CRWV"],
     "us_crypto": ["COIN", "HOOD", "MSTR", "CRCL"],
     "hk_internet": ["0700.HK", "9888.HK", "1024.HK", "9992.HK"],
-    "a_share": [],  # A股需要不同数据源，后续扩展
+    "a_share": [],  # A주는 다른 데이터 소스 필요, 추후 확장
 }
 
 # ============================================================
-# 价格数据获取（通过curl绕过Python SSL问题）
+# 가격 데이터 취득（curl로 Python SSL 문제 우회）
 # ============================================================
 
 def fetch_prices_curl(ticker, days=120):
-    """用curl获取Yahoo Finance日线数据"""
+    """curl로 Yahoo Finance 일봉 데이터 취득"""
     end_ts = int(datetime.now().timestamp())
     start_ts = int((datetime.now() - timedelta(days=days)).timestamp())
     url = (
@@ -78,11 +78,11 @@ def fetch_prices_curl(ticker, days=120):
 
 
 # ============================================================
-# 基本面数据管理
+# 펀더멘털 데이터 관리
 # ============================================================
 
 def load_fundamentals():
-    """加载基本面数据"""
+    """펀더멘털 데이터 로드"""
     if os.path.exists(FUND_FILE):
         with open(FUND_FILE) as f:
             return json.load(f)
@@ -96,7 +96,7 @@ def save_fundamentals(data):
 
 
 def update_fundamental_interactive(ticker):
-    """交互式更新基本面数据"""
+    """인터랙티브 펀더멘털 데이터 업데이트"""
     funds = load_fundamentals()
     if ticker not in funds:
         funds[ticker] = {"quarters": {}}
@@ -116,32 +116,32 @@ def update_fundamental_interactive(ticker):
 
 
 # ============================================================
-# 第一层：动量发现
+# 제1층：모멘텀 발굴
 # ============================================================
 
 def check_momentum(prices):
-    """检查最近交易日是否触发动量信号"""
+    """최근 거래일에 모멘텀 신호가 발생했는지 확인"""
     if len(prices) < 61:
         return None
 
     latest = prices[-1]
     close = latest["close"]
 
-    # 60日新高
+    # 60일 신고가
     past_60_highs = [p["high"] for p in prices[-61:-1]]
     is_60d_high = close > max(past_60_highs)
 
-    # 放量：近5日均量 > 20日均量 × 1.5
+    # 거래량 급증：최근 5일 평균 거래량 > 20일 평균 거래량 × 1.5
     vol_5 = sum(p["volume"] for p in prices[-5:]) / 5
     vol_20 = sum(p["volume"] for p in prices[-20:]) / 20
     vol_ratio = vol_5 / vol_20 if vol_20 > 0 else 0
     is_volume = vol_ratio > 1.5
 
-    # 30日涨幅
+    # 30일 수익률
     close_30d = prices[-31]["close"] if len(prices) > 30 else prices[0]["close"]
     pct_30d = (close - close_30d) / close_30d * 100
 
-    # 近5日有突破日（不一定是今天）
+    # 최근 5일 내 돌파일 존재（반드시 오늘일 필요 없음）
     recent_breakout = False
     for i in range(-5, 0):
         if prices[i]["close"] > max(p["high"] for p in prices[i-60:i]):
@@ -161,11 +161,11 @@ def check_momentum(prices):
 
 
 # ============================================================
-# 第二层：价值验证（6维，含回测改进）
+# 제2층：가치 검증（6개 항목, 백테스트 개선 포함）
 # ============================================================
 
 def check_value(ticker, signal_date=None):
-    """6维价值验证"""
+    """6개 항목 가치 검증"""
     funds = load_fundamentals()
     if ticker not in funds or not funds[ticker].get("quarters"):
         return None
@@ -173,7 +173,7 @@ def check_value(ticker, signal_date=None):
     quarters = funds[ticker]["quarters"]
     sorted_q = sorted(quarters.items(), key=lambda x: x[0])
 
-    # 找最近两个季度
+    # 최근 두 분기 조회
     if signal_date:
         valid = [(d, q) for d, q in sorted_q if d <= signal_date]
     else:
@@ -192,28 +192,28 @@ def check_value(ticker, signal_date=None):
 
     checks = {}
 
-    # 1. 营收加速（同比增速在改善）
+    # 1. 매출 가속（전년 대비 증가율 개선）
     if pd:
         checks["营收加速"] = d["rev_yoy"] > pd["rev_yoy"]
     else:
         checks["营收加速"] = d["rev_yoy"] > 20
 
-    # 2. 毛利率方向
+    # 2. 총이익률 방향
     if pd:
         checks["毛利率扩张"] = d["gm"] > pd["gm"] or d["gm"] > 55
     else:
         checks["毛利率扩张"] = d["gm"] > 45
 
-    # 3. EPS超预期 > 10%
+    # 3. EPS 예상 초과 > 10%
     checks["盈利惊喜"] = d["eps_beat"] > 10
 
-    # 4. 营收高增长 > 15%
+    # 4. 매출 고성장 > 15%
     checks["营收高增长"] = d["rev_yoy"] > 15
 
-    # 5. 毛利率健康 > 40%
+    # 5. 총이익률 건전 > 40%
     checks["毛利率健康"] = d["gm"] > 40
 
-    # 6. ★改进：毛利率连续2季改善（解决NVDA 2023-01漏判）
+    # 6. ★개선：총이익률 2분기 연속 개선（NVDA 2023-01 누락 해결）
     if pd and pd2:
         checks["毛利连续改善"] = d["gm"] > pd["gm"] > pd2["gm"]
     elif pd:
@@ -223,16 +223,16 @@ def check_value(ticker, signal_date=None):
 
     score = sum(1 for v in checks.values() if v)
 
-    # ★改进：独立通过条件
+    # ★개선：독립 통과 조건
     independent_pass = False
     independent_reason = ""
 
-    # 条件A：毛利率连续2季改善 + 毛利>45%（NVDA 2023-01场景）
+    # 조건A：총이익률 2분기 연속 개선 + 총이익률>45%（NVDA 2023-01 시나리오）
     if checks.get("毛利连续改善") and d["gm"] > 45:
         independent_pass = True
         independent_reason = "毛利率连续改善+>45%"
 
-    # 条件B：EPS超预期>30%（MU底部场景）
+    # 조건B：EPS 예상 초과 >30%（MU 바닥 시나리오）
     if d["eps_beat"] > 30:
         independent_pass = True
         independent_reason = "EPS超预期>30%（周期股信号）"
@@ -250,11 +250,11 @@ def check_value(ticker, signal_date=None):
 
 
 # ============================================================
-# 信号分级
+# 신호 등급 분류
 # ============================================================
 
 def grade_signal(momentum, value):
-    """综合评级"""
+    """종합 등급 평가"""
     if not momentum or not momentum["triggered"]:
         return "SKIP", "无动量信号", ""
 
@@ -277,11 +277,11 @@ def grade_signal(momentum, value):
 
 
 # ============================================================
-# 扫描一个标的
+# 단일 종목 스캔
 # ============================================================
 
 def scan_ticker(ticker, verbose=True):
-    """扫描单个标的"""
+    """단일 종목 스캔"""
     prices = fetch_prices_curl(ticker)
     if not prices:
         if verbose:
@@ -302,7 +302,7 @@ def scan_ticker(ticker, verbose=True):
     }
 
     if verbose:
-        # 紧凑输出
+        # 간결 출력
         m = momentum
         symbol = {"BUY_8%": "🔴", "BUY_5%": "🟡", "BUY_3%": "🟢", "WATCH": "👀", "PASS": "⬜", "SKIP": "  "}
         s = symbol.get(grade, "  ")
@@ -320,32 +320,32 @@ def scan_ticker(ticker, verbose=True):
             print(f"  {s} {ticker:<8} ${m['close']:<8} 30日+{m['pct_30d']}%  → 动量触发！需补充基本面数据")
         elif grade == "PASS":
             print(f"  {s} {ticker:<8} ${m['close']:<8}  → {reason}")
-        # SKIP不输出
+        # SKIP은 출력하지 않음
 
     return result
 
 
 # ============================================================
-# 主程序
+# 메인 프로그램
 # ============================================================
 
 def main():
     args = sys.argv[1:]
 
-    # 更新模式
+    # 업데이트 모드
     if args and args[0] == "--update":
         ticker = args[1] if len(args) > 1 else input("  标的代码: ").strip().upper()
         update_fundamental_interactive(ticker)
         return
 
-    # 初始化默认watchlist
+    # 기본 watchlist 초기화
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(WATCHLIST_FILE):
         with open(WATCHLIST_FILE, "w") as f:
             json.dump(DEFAULT_WATCHLIST, f, indent=2)
         print(f"  已创建默认watchlist: {WATCHLIST_FILE}")
 
-    # 确定扫描范围
+    # 스캔 범위 결정
     if args:
         tickers = [t.upper() for t in args]
     else:
@@ -355,7 +355,7 @@ def main():
         for group, syms in wl.items():
             tickers.extend(syms)
 
-    # 执行扫描
+    # 스캔 실행
     today = datetime.now().strftime("%Y-%m-%d")
     print(f"\n{'='*70}")
     print(f"  动量发现 + 价值验证 选股筛  {today}")
@@ -373,7 +373,7 @@ def main():
             elif result["grade"] == "WATCH":
                 watch_signals.append(result)
 
-    # 汇总
+    # 집계
     print(f"\n{'='*70}")
     print(f"  📋 扫描结果汇总")
     print(f"{'='*70}")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-从 Morningstar 筛选器 API 抓取所有有公允价值估计的股票，
-计算潜在涨幅，输出 Top 100。
+Morningstar 스크리너 API에서 공정가치 추정치가 있는 모든 주식을 수집하여
+잠재 상승률을 계산하고 Top 100을 출력한다.
 """
 
 import json
@@ -49,7 +49,7 @@ def main():
     print(f"  Morningstar 公允价值筛选  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"{'='*80}\n")
 
-    # 第一页获取总数
+    # 첫 번째 페이지에서 총 수량 조회
     print("  正在获取第 1 页...")
     data = fetch_page(1)
     total = data.get("total", 0)
@@ -57,7 +57,7 @@ def main():
     total_pages = (total + PAGE_SIZE - 1) // PAGE_SIZE
     print(f"  共 {total} 只股票，{total_pages} 页\n")
 
-    # 抓取剩余页
+    # 나머지 페이지 수집
     for page in range(2, total_pages + 1):
         if page % 10 == 0 or page == total_pages:
             print(f"  正在获取第 {page}/{total_pages} 页...")
@@ -74,7 +74,7 @@ def main():
 
     print(f"\n  共获取 {len(all_rows)} 条记录")
 
-    # 计算潜在涨幅
+    # 잠재 상승률 계산
     stocks = []
     for row in all_rows:
         fair_value = row.get("FairValueEstimate")
@@ -98,10 +98,10 @@ def main():
             "industry": row.get("IndustryName", ""),
         })
 
-    # 按潜在涨幅排序
+    # 잠재 상승률 기준 정렬
     stocks.sort(key=lambda x: x["upside_pct"], reverse=True)
 
-    # 输出 Top 100
+    # Top 100 출력
     print(f"\n{'='*80}")
     print(f"  潜在涨幅 Top 100")
     print(f"{'='*80}\n")
@@ -117,7 +117,7 @@ def main():
             f"{s['moat']:<8} {s['industry'][:20]:<20}"
         )
 
-    # 保存完整数据到 CSV
+    # 전체 데이터를 CSV로 저장
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     today = datetime.now().strftime("%Y%m%d")
     csv_path = os.path.join(OUTPUT_DIR, f"morningstar_fair_value_{today}.csv")
@@ -134,7 +134,7 @@ def main():
     print(f"\n  完整数据已保存到: {csv_path}")
     print(f"  共 {len(stocks)} 只股票（按潜在涨幅排序）\n")
 
-    # 统计摘要
+    # 통계 요약
     undervalued = [s for s in stocks if s["upside_pct"] > 0]
     overvalued = [s for s in stocks if s["upside_pct"] < 0]
     print(f"  📊 统计摘要:")
