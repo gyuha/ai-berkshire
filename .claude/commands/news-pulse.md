@@ -1,0 +1,1 @@
+../../skills/news-pulse.md

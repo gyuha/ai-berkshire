@@ -1,0 +1,1 @@
+../../skills/investment-checklist.md

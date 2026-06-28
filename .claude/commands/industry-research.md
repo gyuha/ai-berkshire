@@ -1,0 +1,1 @@
+../../skills/industry-research.md
